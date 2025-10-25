@@ -33,7 +33,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 // Start server
-// connectDB().then(() => {
+connectDB().then(() => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`\n📝 API Endpoints:`);
@@ -50,6 +50,6 @@ app.listen(PORT, () => {
   );
   console.log(`   GET    /api/employment/stats - Get statistics\n`);
 });
-// });
+});
 
 module.exports = app;
