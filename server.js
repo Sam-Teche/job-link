@@ -6,8 +6,26 @@ require("dotenv").config();
 const app = express();
 
 // Middleware
+// Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5500',
+    'http://localhost:5501',
+    'http://localhost:5502',
+    'http://127.0.0.1:5500',
+    'http://127.0.0.1:5501',
+    'http://127.0.0.1:5502',
+    '*'  // Allow all for development
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
 app.use("/uploads", express.static("uploads"));
 
 // Import modules (uncomment when files are created)
