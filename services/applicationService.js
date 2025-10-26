@@ -29,10 +29,14 @@ class ApplicationService {
 
     await application.save();
 
-    // Send confirmation email
-    await EmailService.sendApplicationConfirmation(application);
+// Send confirmation email
+try {
+  await EmailService.sendApplicationConfirmation(application);
+} catch (err) {
+  console.error('⚠️ Email failed but application saved:', err.message);
+}
 
-    return application;
+return application;
   }
 
   async getAllApplications(filters = {}, pagination = {}) {
