@@ -1,39 +1,36 @@
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 require("dotenv").config();
 
 const app = express();
 
 // Middleware
-// Middleware
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5500",
+      "http://localhost:5501",
+      "http://localhost:5502",
+      "http://127.0.0.1:5500",
+      "http://127.0.0.1:5501",
+      "http://127.0.0.1:5502",
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.json());
-app.use(cors({
-  origin: [
-    'http://localhost:5500',
-    'http://localhost:5501',
-    'http://localhost:5502',
-    'http://127.0.0.1:5500',
-    'http://127.0.0.1:5501',
-    'http://127.0.0.1:5502',
-    '*'  // Allow all for development
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Handle preflight requests
-app.options('*', cors());
-
 app.use("/uploads", express.static("uploads"));
 
-// Import modules (uncomment when files are created)
-const connectDB = require('./config/database');
-const applicationRoutes = require('./routes/applicationRoutes');
+// Import modules
+const connectDB = require("./config/database");
+const applicationRoutes = require("./routes/applicationRoutes");
 
-//Routes
-app.use('/api/employment', applicationRoutes);
+// Routes
+app.use("/api/employment", applicationRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -53,22 +50,24 @@ const PORT = process.env.PORT || 5000;
 
 // Start server
 connectDB().then(() => {
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`\n📝 API Endpoints:`);
-  console.log(`   POST   /api/employment/apply - Submit application`);
-  console.log(`   GET    /api/employment/applications - Get all applications`);
-  console.log(
-    `   GET    /api/employment/applications/:id - Get single application`
-  );
-  console.log(
-    `   PATCH  /api/employment/applications/:id/status - Update status`
-  );
-  console.log(
-    `   DELETE /api/employment/applications/:id - Delete application`
-  );
-  console.log(`   GET    /api/employment/stats - Get statistics\n`);
-});
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`\n📝 API Endpoints:`);
+    console.log(`   POST   /api/employment/apply - Submit application`);
+    console.log(
+      `   GET    /api/employment/applications - Get all applications`
+    );
+    console.log(
+      `   GET    /api/employment/applications/:id - Get single application`
+    );
+    console.log(
+      `   PATCH  /api/employment/applications/:id/status - Update status`
+    );
+    console.log(
+      `   DELETE /api/employment/applications/:id - Delete application`
+    );
+    console.log(`   GET    /api/employment/stats - Get statistics\n`);
+  });
 });
 
 module.exports = app;
