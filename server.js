@@ -23,7 +23,9 @@ app.use(
 );
 
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
+const path = require("path");
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 // Import modules
 const connectDB = require("./config/database");
