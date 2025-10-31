@@ -1,9 +1,13 @@
 const applicationService = require("../services/applicationService");
-const FileHandler = require("../utils/fileHandler");
+const cloudinary = require("cloudinary").v2;
 
 class ApplicationController {
   async submitApplication(req, res) {
     try {
+      console.log("📥 Received application");
+      console.log("Body:", req.body);
+      console.log("Files:", req.files);
+
       const application = await applicationService.createApplication(
         req.body,
         req.files
@@ -22,11 +26,28 @@ class ApplicationController {
         },
       });
     } catch (error) {
-      // Clean up uploaded files on error
+      console.error("❌ Application submission error:", error);
+
+      // Clean up uploaded Cloudinary files on error
       if (req.files) {
-        Object.values(req.files).forEach((fileArray) => {
-          FileHandler.deleteFiles(fileArray.map((f) => f.path));
-        });
+        try {
+          const deletePromises = [];
+
+          Object.values(req.files).forEach((fileArray) => {
+            fileArray.forEach((file) => {
+              // Extract public_id from Cloudinary response
+              if (file.filename) {
+                // file.filename contains the public_id in Cloudinary
+                deletePromises.push(cloudinary.uploader.destroy(file.filename));
+              }
+            });
+          });
+
+          await Promise.all(deletePromises);
+          console.log("🗑️ Cleaned up uploaded files");
+        } catch (cleanupError) {
+          console.error("⚠️ File cleanup error:", cleanupError);
+        }
       }
 
       res.status(400).json({
@@ -40,6 +61,7 @@ class ApplicationController {
       const result = await applicationService.getAllApplications(req.query);
       res.json(result);
     } catch (error) {
+      console.error("❌ Get applications error:", error);
       res.status(500).json({
         message: "Failed to fetch applications",
         error: error.message,

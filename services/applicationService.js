@@ -1,6 +1,6 @@
 const Application = require("../models/Application");
 const EmailService = require("./emailService");
-const FileHandler = require("../utils/fileHandler");
+const cloudinary = require("cloudinary").v2;
 
 class ApplicationService {
   async createApplication(data, files) {
@@ -9,7 +9,7 @@ class ApplicationService {
       throw new Error("Profile photo and resume are required");
     }
 
-    // Prepare file paths
+    // Prepare file paths (Cloudinary returns URLs in file.path)
     const filePaths = {
       profilePhoto: files.profilePhoto[0].path,
       resume: files.resume[0].path,
@@ -19,24 +19,37 @@ class ApplicationService {
         : [],
     };
 
+    // Store Cloudinary public_ids for later deletion
+    const fileIds = {
+      profilePhotoId: files.profilePhoto[0].filename,
+      resumeId: files.resume[0].filename,
+      driverLicenseId: files.driverLicense
+        ? files.driverLicense[0].filename
+        : null,
+      additionalDocsIds: files.additionalDocs
+        ? files.additionalDocs.map((f) => f.filename)
+        : [],
+    };
+
     // Create application
     const application = new Application({
       ...data,
       ...filePaths,
+      ...fileIds, // Store public_ids for deletion
       backgroundCheck: data.backgroundCheck === "on",
       termsAccepted: data.termsAccepted === "on",
     });
 
     await application.save();
 
-// Send confirmation email
-try {
-  await EmailService.sendApplicationConfirmation(application);
-} catch (err) {
-  console.error('⚠️ Email failed but application saved:', err.message);
-}
+    // Send confirmation email
+    try {
+      await EmailService.sendApplicationConfirmation(application);
+    } catch (err) {
+      console.error("⚠️ Email failed but application saved:", err.message);
+    }
 
-return application;
+    return application;
   }
 
   async getAllApplications(filters = {}, pagination = {}) {
@@ -98,7 +111,11 @@ return application;
     }
 
     // Send status update email
-    await EmailService.sendStatusUpdateEmail(application, status);
+    try {
+      await EmailService.sendStatusUpdateEmail(application, status);
+    } catch (err) {
+      console.error("⚠️ Email failed:", err.message);
+    }
 
     return application;
   }
@@ -109,11 +126,67 @@ return application;
       throw new Error("Application not found");
     }
 
-    // Delete associated files
-    FileHandler.deleteApplicationFiles(application);
+    // Delete files from Cloudinary
+    await this.deleteCloudinaryFiles(application);
 
     await application.deleteOne();
     return { message: "Application deleted successfully" };
+  }
+
+  async deleteCloudinaryFiles(application) {
+    const deletePromises = [];
+
+    // Delete profile photo
+    if (application.profilePhotoId) {
+      deletePromises.push(
+        cloudinary.uploader
+          .destroy(application.profilePhotoId)
+          .catch((err) =>
+            console.error(`Failed to delete profile photo: ${err.message}`)
+          )
+      );
+    }
+
+    // Delete resume
+    if (application.resumeId) {
+      deletePromises.push(
+        cloudinary.uploader
+          .destroy(application.resumeId)
+          .catch((err) =>
+            console.error(`Failed to delete resume: ${err.message}`)
+          )
+      );
+    }
+
+    // Delete driver license
+    if (application.driverLicenseId) {
+      deletePromises.push(
+        cloudinary.uploader
+          .destroy(application.driverLicenseId)
+          .catch((err) =>
+            console.error(`Failed to delete license: ${err.message}`)
+          )
+      );
+    }
+
+    // Delete additional docs
+    if (
+      application.additionalDocsIds &&
+      application.additionalDocsIds.length > 0
+    ) {
+      application.additionalDocsIds.forEach((id) => {
+        deletePromises.push(
+          cloudinary.uploader
+            .destroy(id)
+            .catch((err) =>
+              console.error(`Failed to delete additional doc: ${err.message}`)
+            )
+        );
+      });
+    }
+
+    await Promise.allSettled(deletePromises);
+    console.log("🗑️ Cloudinary files deleted");
   }
 
   async getStatistics() {

@@ -33,6 +33,8 @@ const applicationRoutes = require("./routes/applicationRoutes");
 
 // Routes
 app.use("/api/employment", applicationRoutes);
+app.use("/api/employment", require("./routes/applicationRoutes"));
+
 
 // Health check
 app.get("/api/health", (req, res) => {

@@ -40,6 +40,12 @@ const applicationSchema = new mongoose.Schema(
     driverLicense: { type: String },
     additionalDocs: [{ type: String }],
 
+    // Cloudinary public_ids (for file deletion)
+    profilePhotoId: { type: String },
+    resumeId: { type: String },
+    driverLicenseId: { type: String },
+    additionalDocsIds: [{ type: String }],
+
     // Additional Information
     referralSource: { type: String },
     coverLetter: { type: String, required: true },
