@@ -181,6 +181,7 @@ class EmailService {
                           ? `<p><strong>Additional Notes:</strong> ${application.notes}</p>`
                           : ""
                       }
+                      <p>Kindly reach out to Mr Smith on +1 (681) 368-0499 with your application number </p>
                       <p>Best regards,<br>${
                         process.env.COMPANY_NAME || "Job Link"
                       }</p>
