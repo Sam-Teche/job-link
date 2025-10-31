@@ -1,77 +1,58 @@
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("cloudinary").v2;
 
-// Create upload directories
-const uploadDirs = [
-  "uploads/photos",
-  "uploads/resumes",
-  "uploads/licenses",
-  "uploads/documents",
-];
-uploadDirs.forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+// 🔧 Configure Cloudinary using environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Storage configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let folder = "uploads/documents";
+// ☁️ Configure Cloudinary storage (instead of local disk)
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    // Determine upload folder based on fieldname
+    let folder = "joblink_uploads/documents";
+    if (file.fieldname === "profilePhoto") folder = "joblink_uploads/photos";
+    else if (file.fieldname === "resume") folder = "joblink_uploads/resumes";
+    else if (file.fieldname === "driverLicense")
+      folder = "joblink_uploads/licenses";
 
-    if (file.fieldname === "profilePhoto") {
-      folder = "uploads/photos";
-    } else if (file.fieldname === "resume") {
-      folder = "uploads/resumes";
-    } else if (file.fieldname === "driverLicense") {
-      folder = "uploads/licenses";
-    }
+    // Only allow specific file types
+    const allowedFormats = ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx"];
 
-    cb(null, folder);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(
-      null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
-    );
+    return {
+      folder,
+      allowed_formats: allowedFormats,
+      public_id: `${file.fieldname}-${Date.now()}`,
+    };
   },
 });
 
-// File filter
+// ✅ Optional: filter out invalid uploads before Cloudinary receives them
 const fileFilter = (req, file, cb) => {
-  const allowedImageTypes = /jpeg|jpg|png|gif/;
-  const allowedDocTypes = /pdf|doc|docx/;
-
-  const extname = path.extname(file.originalname).toLowerCase();
-  const mimetype = file.mimetype;
+  const imageTypes = /jpeg|jpg|png|gif/;
+  const docTypes = /pdf|doc|docx/;
+  const ext = file.originalname.split(".").pop().toLowerCase();
 
   if (file.fieldname === "profilePhoto" || file.fieldname === "driverLicense") {
-    if (allowedImageTypes.test(extname) || mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only image files are allowed!"));
-    }
+    if (imageTypes.test(ext)) cb(null, true);
+    else cb(new Error("Only image files allowed for photos/licenses!"));
   } else if (file.fieldname === "resume") {
-    if (
-      allowedDocTypes.test(extname.slice(1)) ||
-      mimetype === "application/pdf" ||
-      mimetype.includes("document")
-    ) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only PDF, DOC, and DOCX files allowed for resume!"));
-    }
+    if (docTypes.test(ext)) cb(null, true);
+    else cb(new Error("Only PDF/DOC/DOCX allowed for resumes!"));
   } else {
     cb(null, true);
   }
 };
 
+// ⚙️ Initialize Multer with Cloudinary storage
 const upload = multer({
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: fileFilter,
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter,
 });
 
 module.exports = upload;
