@@ -16,9 +16,9 @@ const applicationSchema = new mongoose.Schema(
     country: { type: String, required: true },
 
     // Position Information
-    // position: { type: String, required: true },
-    // department: { type: String, required: true },
-    // employmentType: { type: String, required: true },
+     position: { type: String, required: true },
+     department: { type: String, required: true },
+     employmentType: { type: String, required: true },
     // expectedSalary: { type: Number, required: true },
     // startDate: { type: Date, required: true },
 
