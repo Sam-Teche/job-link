@@ -15,7 +15,7 @@ app.use(
       "http://127.0.0.1:5502",
       "http://127.0.0.1:5500/frontend",
       "http://127.0.0.1:5500/frontend2",
-      "https://joblinkadmin.netlify.app", // Add your production frontend URL
+      "https://joblinkadmin.netlify.app/", // Add your production frontend URL
     ],
     credentials: true,
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
