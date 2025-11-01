@@ -46,23 +46,23 @@ class EmailService {
                           <h3 style="margin-top: 0; color: #667eea;">Application Details</h3>
                           <div class="info-row">
                               <span class="label">Application Number:</span>
-                              <span>${application.applicationNumber}</span>
+                              <span> ${application.applicationNumber}</span>
                           </div>
                           <div class="info-row">
                               <span class="label">Position:</span>
-                              <span>${application.position}</span>
+                              <span> ${application.position}</span>
                           </div>
                           <div class="info-row">
                               <span class="label">Department:</span>
-                              <span>${application.department}</span>
+                              <span> ${application.department}</span>
                           </div>
                           <div class="info-row">
                               <span class="label">Employment Type:</span>
-                              <span>${application.employmentType}</span>
+                              <span> ${application.employmentType}</span>
                           </div>
                           <div class="info-row">
                               <span class="label">Submitted:</span>
-                              <span>${new Date(
+                              <span> ${new Date(
                                 application.submittedAt
                               ).toLocaleString()}</span>
                           </div>
